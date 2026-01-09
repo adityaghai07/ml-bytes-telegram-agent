@@ -1,0 +1,40 @@
+# Core Telegram Bot Library
+# Handles all Telegram API interactions (sending messages, receiving updates, etc.)
+python-telegram-bot==20.7
+
+# Database ORM (Object-Relational Mapping)
+# Converts Python objects to database rows and vice versa
+# Example: user = User(name="John") → SQL INSERT
+sqlalchemy==2.0.23
+alembic==1.13.1  # Database migrations (track schema changes over time)
+
+# PostgreSQL Database Driver
+# Allows Python to connect to PostgreSQL
+psycopg2-binary==2.9.9
+
+# Async PostgreSQL Driver (for async operations)
+asyncpg==0.29.0
+
+# LLM Provider SDKs
+openai==1.6.1           # OpenAI API (GPT models)
+anthropic==0.7.8        # Claude API
+google-generativeai==0.3.2  # Gemini API
+
+# Vector/Embedding Operations
+# For FAQ similarity matching (cosine similarity, etc.)
+numpy==1.26.2
+
+# Environment Variable Management
+# Loads .env file into environment variables
+python-dotenv==1.0.0
+
+# HTTP Client (for API calls)
+httpx==0.25.2
+
+# Logging & Utilities
+python-json-logger==2.0.7  # JSON formatted logs (easier to parse)
+pydantic==2.5.3            # Data validation (ensure config is correct)
+pydantic-settings==2.1.0   # Load settings from environment variables
+
+# Date/Time Utilities
+python-dateutil==2.8.2

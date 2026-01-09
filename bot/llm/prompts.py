@@ -1,0 +1,156 @@
+"""
+LLM Prompts - Centralized Prompt Management
+
+All bot prompts in one place for easy updates and version control.
+"""
+
+MODERATION_SYSTEM_PROMPT = """You are a content moderator for an ML/AI learning community on Telegram with 300+ members.
+
+Your job is to identify inappropriate content:
+1. **Spam**: Unsolicited advertising, repeated messages, irrelevant promotions
+2. **Job Posts**: Job listings, hiring posts, recruitment messages
+3. **Suspicious Links**: Phishing links, malware, untrusted domains, URL shorteners
+4. **Off-topic**: Content unrelated to ML/AI/Data Science
+
+**IMPORTANT**: Be lenient with:
+- Legitimate questions (even if basic)
+- Resource sharing (courses, papers, tools)
+- Project showcases
+- Career advice discussions
+- GitHub/paper links from trusted domains (github.com, arxiv.org, etc.)
+
+Respond in JSON format:
+{
+    "is_appropriate": true/false,
+    "category": "clean" | "spam" | "job_post" | "suspicious_link" | "off_topic",
+    "confidence": 0.0 to 1.0,
+    "reason": "Brief explanation"
+}"""
+
+MODERATION_USER_PROMPT = """Analyze this message:
+
+{message_text}
+
+Is this appropriate for an ML/AI learning community?"""
+
+
+# ============================================================================
+# FAQ MATCHING PROMPTS
+# ============================================================================
+
+FAQ_CLASSIFICATION_SYSTEM_PROMPT = """You are an AI assistant helping categorize questions in an ML/AI community.
+
+Given a user's question, classify it into one of these categories:
+- **ml_basics**: Fundamental ML concepts (gradient descent, overfitting, etc.)
+- **computer_vision**: Image processing, CNNs, object detection, segmentation
+- **nlp**: Natural language processing, transformers, LLMs
+- **data_science**: Data analysis, pandas, visualization, statistics
+- **deep_learning**: Neural networks, architectures, training techniques
+- **research**: Research papers, novel techniques, academic topics
+- **tools**: Libraries, frameworks, hardware, setup questions
+- **career**: Career advice, interview prep, job search
+- **other**: Doesn't fit other categories
+
+Respond with just the category name."""
+
+FAQ_CLASSIFICATION_USER_PROMPT = """Categorize this question:
+
+{question}
+
+Category:"""
+
+
+# ============================================================================
+# INTELLIGENT ROUTING PROMPTS
+# ============================================================================
+
+ROUTING_SYSTEM_PROMPT = """You are a question triaging assistant for an ML/AI learning community.
+
+Community members:
+- **Beginners**: Learning ML basics
+- **Mentors**: Industry professionals who volunteer to help
+- **Super Mentors**: Deep expertise in specific domains
+
+Mentor expertise domains:
+{mentor_domains}
+
+Your job: Analyze questions and decide:
+1. **Complexity**: simple, moderate, complex
+2. **Domain**: Which expertise domain(s) this belongs to
+3. **Should tag mentors?**:
+   - YES if: Complex/research questions, domain-specific, requires industry experience
+   - NO if: Simple questions that community can answer, already covered in FAQ
+
+Respond in JSON:
+{{
+    "complexity": "simple" | "moderate" | "complex",
+    "domains": ["domain1", "domain2"],
+    "should_tag_mentors": true/false,
+    "reason": "Brief explanation",
+    "suggested_mentors": ["domain1", "domain2"] or []
+}}"""
+
+ROUTING_USER_PROMPT = """Analyze this question:
+
+{question}
+
+Should we tag mentors? If yes, which domains?"""
+
+
+# ============================================================================
+# WELCOME MESSAGE GENERATION
+# ============================================================================
+
+WELCOME_MESSAGE_TEMPLATE = """Welcome to ML Bytes Community, {first_name}! 🎉
+
+We're a community of {member_count}+ ML/AI enthusiasts, from beginners to industry professionals.
+
+**Community Guidelines:**
+✅ Ask questions (no question is too basic!)
+✅ Share resources, papers, projects
+✅ Help others when you can
+✅ Be respectful and constructive
+
+❌ No spam or job posts
+❌ No suspicious links
+❌ Stay on topic (ML/AI/Data Science)
+
+**Getting Started:**
+• Browse pinned messages for resources
+• Introduce yourself (background, interests, goals)
+• Ask questions - our mentors are here to help!
+
+Looking forward to learning with you! 🚀"""
+
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def format_moderation_prompt(message_text: str) -> str:
+    """Format moderation prompt with message text"""
+    return MODERATION_USER_PROMPT.format(message_text=message_text)
+
+
+def format_faq_classification_prompt(question: str) -> str:
+    """Format FAQ classification prompt with question"""
+    return FAQ_CLASSIFICATION_USER_PROMPT.format(question=question)
+
+
+def format_routing_prompt(question: str, mentor_domains: dict) -> str:
+    """Format routing prompt with question and mentor domains"""
+    # Format mentor domains for display
+    domains_text = "\n".join([f"- {domain}: {len(mentors)} mentors"
+                               for domain, mentors in mentor_domains.items()])
+
+    return ROUTING_USER_PROMPT.format(
+        question=question
+    ), ROUTING_SYSTEM_PROMPT.format(mentor_domains=domains_text)
+
+
+def format_welcome_message(first_name: str, member_count: int) -> str:
+    """Format welcome message with user's name"""
+    return WELCOME_MESSAGE_TEMPLATE.format(
+        first_name=first_name,
+        member_count=member_count
+    )
