@@ -158,12 +158,16 @@ class RoutingService:
         if not mentors:
             return ""
 
-        domain_str = ", ".join(domains) if domains else "this question"
+        # Escape domain names for Markdown
+        escaped_domains = [self._escape_markdown(d) for d in domains] if domains else []
+        domain_str = ", ".join(escaped_domains) if escaped_domains else "this question"
 
         mentions = []
         for mentor in mentors:
             if mentor.username:
-                mentions.append(f"@{mentor.username}")
+                # Escape Markdown special characters in username
+                escaped_username = self._escape_markdown(mentor.username)
+                mentions.append(f"@{escaped_username}")
             else:
                 mentions.append(f"[Mentor](tg://user?id={mentor.telegram_id})")
 
@@ -173,3 +177,21 @@ class RoutingService:
             f"\n\n🔔 This looks like a {domain_str} question. "
             f"Tagging mentors: {mentions_str}"
         )
+
+    def _escape_markdown(self, text: str) -> str:
+        """
+        Escape Markdown special characters
+
+        Args:
+            text: Text to escape
+
+        Returns:
+            Escaped text safe for Markdown parsing
+        """
+        # Markdown special characters that need escaping
+        special_chars = ['_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!']
+
+        for char in special_chars:
+            text = text.replace(char, f'\\{char}')
+
+        return text
