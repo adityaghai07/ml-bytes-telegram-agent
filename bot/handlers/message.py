@@ -14,6 +14,7 @@ from bot.services.moderation_service import ModerationService
 from bot.services.faq_service import FAQService
 from bot.services.routing_service import RoutingService
 from bot.utils.logger import get_logger
+from bot.utils.config import settings
 
 logger = get_logger(__name__)
 
@@ -21,6 +22,17 @@ logger = get_logger(__name__)
 moderation_service = ModerationService()
 faq_service = FAQService()
 routing_service = RoutingService()
+
+
+def _is_admin(telegram_id: int) -> bool:
+    """Check if user is admin based on config"""
+    return telegram_id in settings.get_admin_ids()
+
+
+def _is_mentor(telegram_id: int) -> bool:
+    """Check if user is mentor based on config"""
+    mentor_domains = settings.get_mentor_domains()
+    return any(telegram_id in mentor_ids for mentor_ids in mentor_domains.values())
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -44,6 +56,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         db_user = await _get_or_create_user(user)
         db_message = await _store_message(db_user.id, message.message_id, text)
+
+        # Check if user is admin or mentor - they bypass moderation, FAQ, and routing
+        is_elevated_user = db_user.is_admin or db_user.is_mentor
+
+        if is_elevated_user:
+            logger.info(f"Skipping moderation/FAQ/routing for {'admin' if db_user.is_admin else 'mentor'} {user.id}")
+            return
 
         should_delete = await _check_moderation(text, db_user.id, message.message_id)
         if should_delete:
@@ -97,16 +116,30 @@ async def _get_or_create_user(telegram_user) -> User:
         )
         user = result.scalar_one_or_none()
 
+        # Check current role status from config
+        is_admin = _is_admin(telegram_user.id)
+        is_mentor = _is_mentor(telegram_user.id)
+
         if not user:
+            # Create new user with role flags
             user = User(
                 telegram_id=telegram_user.id,
                 username=telegram_user.username,
                 first_name=telegram_user.first_name,
-                last_name=telegram_user.last_name
+                last_name=telegram_user.last_name,
+                is_admin=is_admin,
+                is_mentor=is_mentor
             )
             session.add(user)
             await session.flush()
             await session.refresh(user)
+        else:
+            # Update role flags if they've changed in config
+            if user.is_admin != is_admin or user.is_mentor != is_mentor:
+                user.is_admin = is_admin
+                user.is_mentor = is_mentor
+                await session.flush()
+                await session.refresh(user)
 
         return user
 
