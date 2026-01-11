@@ -9,12 +9,11 @@ from telegram.ext import (
     Application,
     CommandHandler,
     MessageHandler,
-    ChatMemberHandler,
     filters,
 )
 
 from bot.db.database import init_db, close_db
-from bot.handlers import message, member, admin
+from bot.handlers import message, admin
 from bot.utils.config import settings
 from bot.utils.logger import get_logger
 
@@ -67,8 +66,7 @@ def main():
     1. Application with bot token
     2. Command handlers (/start, /help, etc.)
     3. Message handlers (text messages)
-    4. Member handlers (joins/leaves)
-    5. Error handler
+    4. Error handler
     """
     logger.info("Starting ML Bytes Telegram Bot...")
 
@@ -88,24 +86,6 @@ def main():
     application.add_handler(CommandHandler("stats", admin.cmd_stats))
 
     application.add_handler(
-        ChatMemberHandler(member.handle_new_member, ChatMemberHandler.CHAT_MEMBER)
-    )
-
-    application.add_handler(
-        MessageHandler(
-            filters.StatusUpdate.NEW_CHAT_MEMBERS,
-            member.handle_new_member
-        )
-    )
-
-    application.add_handler(
-        MessageHandler(
-            filters.StatusUpdate.LEFT_CHAT_MEMBER,
-            member.handle_left_member
-        )
-    )
-
-    application.add_handler(
         MessageHandler(
             filters.TEXT & ~filters.COMMAND,
             message.handle_message
@@ -117,7 +97,7 @@ def main():
     logger.info("Bot handlers registered. Starting polling...")
 
     application.run_polling(
-        allowed_updates=["message", "chat_member"],
+        allowed_updates=["message"],
         drop_pending_updates=True
     )
 
