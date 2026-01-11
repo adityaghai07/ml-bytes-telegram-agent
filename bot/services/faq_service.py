@@ -4,11 +4,10 @@ FAQ Service
 Handles FAQ matching using vector similarity search.
 """
 
-import numpy as np
 from dataclasses import dataclass
 from typing import List, Optional
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from bot.db.database import get_db_session
 from bot.db.models import FAQ
@@ -37,14 +36,14 @@ class FAQService:
     async def find_matching_faq(
         self,
         question: str,
-        top_k: int = 3
+        top_k: int = 1
     ) -> Optional[FAQMatch]:
         """
-        Find FAQ most similar to question
+        Find FAQ most similar to question using database-level cosine similarity
 
         Args:
             question: User's question
-            top_k: Number of top matches to consider
+            top_k: Number of top matches to consider (default 1 for best match)
 
         Returns:
             Best FAQ match if similarity above threshold, else None
@@ -52,45 +51,86 @@ class FAQService:
         try:
             question_embedding = await self.llm.get_embedding(question)
 
+            # Convert embedding list to PostgreSQL array literal format
+            # Using ARRAY constructor is more reliable with SQLAlchemy
+            embedding_values = ','.join(str(float(x)) for x in question_embedding)
+
+            # Use raw SQL to calculate cosine similarity in the database
+            # This is MUCH faster than loading all FAQs and calculating in Python
+            # Note: We use string formatting for the array since it's safe (we control the input)
+            # and parameterized binding doesn't work well with array types in raw SQL
+            query_str = f"""
+                SELECT
+                    id,
+                    question,
+                    answer,
+                    category,
+                    created_by,
+                    created_at,
+                    updated_at,
+                    times_matched,
+                    (
+                        -- Cosine similarity formula: (A · B) / (||A|| * ||B||)
+                        (
+                            SELECT SUM(a * b)
+                            FROM unnest(embedding) WITH ORDINALITY AS t1(a, ord)
+                            JOIN unnest(ARRAY[{embedding_values}]::float[]) WITH ORDINALITY AS t2(b, ord)
+                                ON t1.ord = t2.ord
+                        ) / (
+                            SQRT((SELECT SUM(a * a) FROM unnest(embedding) AS a)) *
+                            SQRT((SELECT SUM(b * b) FROM unnest(ARRAY[{embedding_values}]::float[]) AS b))
+                        )
+                    ) AS similarity
+                FROM faqs
+                WHERE embedding IS NOT NULL
+                ORDER BY similarity DESC
+                LIMIT :limit
+            """
+
+            query = text(query_str)
+
             async with get_db_session() as session:
                 result = await session.execute(
-                    select(FAQ).where(FAQ.embedding.isnot(None))
+                    query,
+                    {'limit': top_k}
                 )
-                faqs = result.scalars().all()
+                row = result.fetchone()
 
-            if not faqs:
+            if not row:
                 logger.warning("No FAQs with embeddings found")
                 return None
 
-            matches = []
-            for faq in faqs:
-                similarity = self._cosine_similarity(
-                    question_embedding,
-                    faq.embedding
-                )
-                matches.append(FAQMatch(faq=faq, similarity=similarity))
+            # Extract values from the result row
+            similarity = float(row.similarity) if row.similarity else 0.0
 
-            matches.sort(key=lambda x: x.similarity, reverse=True)
-            best_match = matches[0]
+            if similarity >= self.similarity_threshold:
+                # Fetch the full FAQ object for the response
+                async with get_db_session() as session:
+                    faq_result = await session.execute(
+                        select(FAQ).where(FAQ.id == row.id)
+                    )
+                    faq = faq_result.scalar_one()
 
-            if best_match.similarity >= self.similarity_threshold:
                 logger.info(
-                    f"FAQ match found: {best_match.faq.id} "
-                    f"(similarity: {best_match.similarity:.2f})"
+                    f"FAQ match found: {faq.id} "
+                    f"(similarity: {similarity:.2f})"
                 )
 
-                await self._increment_match_count(best_match.faq.id)
+                await self._increment_match_count(faq.id)
 
-                return best_match
+                return FAQMatch(faq=faq, similarity=similarity)
 
             logger.info(
                 f"No FAQ match above threshold "
-                f"(best: {best_match.similarity:.2f})"
+                f"(best: {similarity:.2f})"
             )
             return None
 
         except LLMProviderError as e:
             logger.error(f"FAQ matching failed: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"FAQ matching error: {e}", exc_info=True)
             return None
 
     async def add_faq(
@@ -154,29 +194,6 @@ class FAQService:
                 return True
 
             return False
-
-    def _cosine_similarity(
-        self,
-        vec1: List[float],
-        vec2: List[float]
-    ) -> float:
-        """
-        Calculate cosine similarity between two vectors
-
-        Cosine similarity = (A · B) / (||A|| * ||B||)
-        Returns value between 0 and 1 (1 = identical)
-        """
-        a = np.array(vec1)
-        b = np.array(vec2)
-
-        dot_product = np.dot(a, b)
-        norm_a = np.linalg.norm(a)
-        norm_b = np.linalg.norm(b)
-
-        if norm_a == 0 or norm_b == 0:
-            return 0.0
-
-        return float(dot_product / (norm_a * norm_b))
 
     async def _increment_match_count(self, faq_id: int):
         """Increment FAQ match counter"""

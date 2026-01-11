@@ -132,32 +132,6 @@ Should we tag mentors? If yes, which domains?"""
 
 
 # ============================================================================
-# WELCOME MESSAGE GENERATION
-# ============================================================================
-
-WELCOME_MESSAGE_TEMPLATE = """Welcome to ML Bytes Community, {first_name}! 🎉
-
-We're a community of {member_count}+ ML/AI enthusiasts, from beginners to industry professionals.
-
-**Community Guidelines:**
-✅ Ask questions (no question is too basic!)
-✅ Share resources, papers, projects
-✅ Help others when you can
-✅ Be respectful and constructive
-
-❌ No spam or job posts
-❌ No suspicious links
-❌ Stay on topic (ML/AI/Data Science)
-
-**Getting Started:**
-• Browse pinned messages for resources
-• Introduce yourself (background, interests, goals)
-• Ask questions - our mentors are here to help!
-
-Looking forward to learning with you! 🚀"""
-
-
-# ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
 
@@ -180,11 +154,3 @@ def format_routing_prompt(question: str, mentor_domains: dict) -> str:
     return ROUTING_USER_PROMPT.format(
         question=question
     ), ROUTING_SYSTEM_PROMPT.format(mentor_domains=domains_text)
-
-
-def format_welcome_message(first_name: str, member_count: int) -> str:
-    """Format welcome message with user's name"""
-    return WELCOME_MESSAGE_TEMPLATE.format(
-        first_name=first_name,
-        member_count=member_count
-    )

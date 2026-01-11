@@ -1,6 +1,6 @@
 # Core Telegram Bot Library
 # Handles all Telegram API interactions (sending messages, receiving updates, etc.)
-python-telegram-bot==20.7
+python-telegram-bot>=21.10
 
 # Database ORM (Object-Relational Mapping)
 # Converts Python objects to database rows and vice versa
@@ -16,25 +16,21 @@ psycopg2-binary==2.9.9
 asyncpg==0.29.0
 
 # LLM Provider SDKs
-openai==1.6.1           # OpenAI API (GPT models)
-anthropic==0.7.8        # Claude API
-google-generativeai==0.3.2  # Gemini API
-
-# Vector/Embedding Operations
-# For FAQ similarity matching (cosine similarity, etc.)
-numpy==1.26.2
+openai>=1.54.0          # OpenAI API (GPT models) - updated for compatibility
+anthropic>=0.40.0       # Claude API - updated
+google-generativeai>=0.8.0  # Gemini API - updated
 
 # Environment Variable Management
 # Loads .env file into environment variables
 python-dotenv==1.0.0
 
 # HTTP Client (for API calls)
-httpx==0.25.2
+httpx>=0.27.0  # Updated for OpenAI SDK compatibility
 
 # Logging & Utilities
 python-json-logger==2.0.7  # JSON formatted logs (easier to parse)
-pydantic==2.5.3            # Data validation (ensure config is correct)
-pydantic-settings==2.1.0   # Load settings from environment variables
+pydantic>=2.10.0           # Data validation (ensure config is correct)
+pydantic-settings>=2.7.0   # Load settings from environment variables
 
 # Date/Time Utilities
 python-dateutil==2.8.2
