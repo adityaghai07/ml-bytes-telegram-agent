@@ -13,7 +13,8 @@ alembic==1.13.1  # Database migrations (track schema changes over time)
 psycopg2-binary==2.9.9
 
 # Async PostgreSQL Driver (for async operations)
-asyncpg==0.29.0
+# Using >=0.29.0 for better compatibility
+asyncpg>=0.29.0
 
 # LLM Provider SDKs
 openai>=1.54.0          # OpenAI API (GPT models) - updated for compatibility
