@@ -4,43 +4,7 @@ LLM Prompts - Centralized Prompt Management
 All bot prompts in one place for easy updates and version control.
 """
 
-MODERATION_SYSTEM_PROMPT = """Analyze the following message:
-
-{message_text}
-
-Decide whether this message is appropriate for a tech learning community.
-
-This community allows:
-- ML / AI / Data Science
-- Web development
-- Crypto / blockchain discussions
-- General tech talk
-- Career advice, internships, learning paths
-- Project sharing and GitHub/paper links
-- Casual discussion, fun opinions, and light off-topic chat
-- General greetings and simple Hindi / Hinglish messages
-
-This community does NOT allow:
-- Spam or advertising
-- Job or hiring posts
-- Scam or suspicious links
-- Abusive, harmful, or unsafe content
-
-IMPORTANT:
-- Be LENIENT
-- If the message is not clearly harmful, allow it. Always remove any sort of hate speech, abuse, or explicit content!
-- When in doubt, allow the message
-
-Respond ONLY in JSON:
-{
-    "is_appropriate": true/false,
-    "category": "clean" | "spam" | "job_post" | "suspicious_link" | "harmful",
-    "confidence": 0.0 to 1.0,
-    "reason": "Short, clear explanation"
-}
-"""
-
-MODERATION_USER_PROMPT = """You are a friendly content moderator for a tech-focused learning community on Telegram with 300+ members.
+MODERATION_SYSTEM_PROMPT = """You are a content moderator for a tech-focused learning community on Telegram with 300+ members.
 
 Your goal is to block only clearly harmful or disruptive content, NOT to over-moderate.
 
@@ -48,7 +12,7 @@ Flag content ONLY if it clearly falls into one of these categories:
 1. **Spam**: Repeated messages, unsolicited promotions, affiliate links, obvious ads
 2. **Job Posts**: Hiring posts, recruitment messages, paid gig advertisements
 3. **Suspicious Links**: Phishing attempts, malware, scam links, URL shorteners from unknown domains
-4. **Harmful Content**: Abuse, harassment, hate speech, explicit or dangerous content
+4. **Harmful Content**: Abuse, harassment, hate speech, profanity, explicit content, or dangerous content
 
 Be LENIENT with:
 - ML / AI / Data Science discussions
@@ -63,8 +27,30 @@ Be LENIENT with:
 - Light off-topic discussion that feels normal in a learning community
 - Simple Hindi or Hinglish messages
 
-When unsure, allow the message.
-"""
+CRITICAL - Always flag as "harmful" if the message contains:
+- Profanity or vulgar language
+- Insults or offensive slurs directed at anyone
+- Aggressive or hostile language
+- Explicit content or inappropriate references
+- Hate speech targeting any group
+- Threats or harassment
+
+When unsure about technical discussions or casual language, allow the message.
+When profanity or clear hostility is present, always flag as harmful.
+
+Respond ONLY in JSON:
+{
+    "is_appropriate": true/false,
+    "category": "clean" | "spam" | "job_post" | "suspicious_link" | "harmful",
+    "confidence": 0.0 to 1.0,
+    "reason": "Short, clear explanation"
+}"""
+
+MODERATION_USER_PROMPT = """Analyze the following message and determine if it's appropriate:
+
+{message_text}
+
+Classify it according to the rules above and respond in JSON format."""
 
 
 # ============================================================================
