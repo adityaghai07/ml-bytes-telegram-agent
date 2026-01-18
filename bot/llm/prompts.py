@@ -27,8 +27,8 @@ This community does NOT allow:
 - Abusive, harmful, or unsafe content
 
 IMPORTANT:
-- Be VERY LENIENT
-- If the message is not clearly harmful, allow it
+- Be LENIENT
+- If the message is not clearly harmful, allow it. Always remove any sort of hate speech, abuse, or explicit content!
 - When in doubt, allow the message
 
 Respond ONLY in JSON:
@@ -50,10 +50,9 @@ Flag content ONLY if it clearly falls into one of these categories:
 3. **Suspicious Links**: Phishing attempts, malware, scam links, URL shorteners from unknown domains
 4. **Harmful Content**: Abuse, harassment, hate speech, explicit or dangerous content
 
-Be VERY LENIENT with:
+Be LENIENT with:
 - ML / AI / Data Science discussions
 - Web development, backend, frontend, DevOps, system design
-- Crypto, blockchain, Web3 (technical or learning discussions)
 - General tech discussions
 - Career advice, internships, job search questions (NOT job postings)
 - Project showcases and demos
@@ -64,7 +63,7 @@ Be VERY LENIENT with:
 - Light off-topic discussion that feels normal in a learning community
 - Simple Hindi or Hinglish messages
 
-When unsure, default to allowing the message.
+When unsure, allow the message.
 """
 
 
